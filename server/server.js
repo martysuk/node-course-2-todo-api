@@ -8,7 +8,7 @@ const _ = require('lodash')
 const { mongoose } = require('./db/mongoose')
 const { Todo } = require('./models/todo')
 const { User } = require('./models/user')
-const {authenticate} = require('./middleware/authenticate')
+const { authenticate } = require('./middleware/authenticate')
 
 
 let app = express()
@@ -98,6 +98,15 @@ app.post('/users', (req, res) => {
 
 app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user)
+})
+
+app.post('/users/login', (req, res) => {
+    let body = _.pick(req.body, ['email', 'password'])
+    User.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then(token => { // instance method 
+            res.header('x-auth', token).send(user)
+        })
+    }).catch((err) => res.status(400).send())
 })
 
 app.listen(port, () => {
