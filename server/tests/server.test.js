@@ -203,7 +203,7 @@ describe('POST /users', () => {
 
         request(app)
             .post('/users')
-            .send({email, password})
+            .send({ email, password })
             .expect(200)
             .expect((res) => {
                 expect(res.headers['x-auth']).toBeTruthy()
@@ -211,11 +211,11 @@ describe('POST /users', () => {
                 expect(res.body.email).toBe(email)
             })
             .end(err => {
-                if(err){
+                if (err) {
                     return done(err)
                 }
 
-                User.findOne({email}).then((user) => {
+                User.findOne({ email }).then((user) => {
                     expect(user).toBeTruthy()
                     expect(user.password).not.toBe(password)
                     done()
@@ -226,10 +226,10 @@ describe('POST /users', () => {
     it('should return validation errors if request invalid', (done) => {
         let email = 'ewe'
         let password = '123'
-        
+
         request(app)
             .post('/users')
-            .send({email,password})
+            .send({ email, password })
             .expect(400)
             .end(done)
     })
@@ -237,10 +237,10 @@ describe('POST /users', () => {
     it('should not create user if email in use', (done) => {
         let email = users[0].email
         let password = '123wrr31'
-        
+
         request(app)
             .post('/users')
-            .send({email,password})
+            .send({ email, password })
             .expect(400)
             .end(done)
     })
@@ -252,15 +252,15 @@ describe('POST /users/login', () => {
         request(app)
             .post('/users/login')
             .send({
-                email : users[1].email,
-                password : users[1].password
+                email: users[1].email,
+                password: users[1].password
             })
             .expect(200)
             .expect(res => {
                 expect(res.headers['x-auth']).toBeTruthy()
             })
             .end((err, res) => {
-                if(err){
+                if (err) {
                     return done(err)
                 }
                 User.findById(users[1]._id).then((user) => {
@@ -275,23 +275,41 @@ describe('POST /users/login', () => {
 
     it('should reject invalid login', (done) => {
         request(app)
-        .post('/users/login')
-        .send({
-            email : users[1].email,
-            password : users[1].password + '123'
-        })
-        .expect(400)
-        .expect(res => {
-            expect(res.headers['x-auth']).toBeFalsy()
-        })
-        .end((err, res) => {
-            if(err){
-                return done(err)
-            }
-            User.findById(users[1]._id).then((user) => {
-                expect(user.tokens).toHaveLength(0)
-                done()
-            }).catch(err => done(err))
-        })
+            .post('/users/login')
+            .send({
+                email: users[1].email,
+                password: users[1].password + '123'
+            })
+            .expect(400)
+            .expect(res => {
+                expect(res.headers['x-auth']).toBeFalsy()
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err)
+                }
+                User.findById(users[1]._id).then((user) => {
+                    expect(user.tokens).toHaveLength(0)
+                    done()
+                }).catch(err => done(err))
+            })
+    })
+})
+
+describe('DELETE /users/me/token', () => {
+    it('should remove auth token on logout', (done) => {
+        request(app)
+            .delete('/users/me/token')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .end((err, res) => {
+                if(err){
+                    return done(err)
+                }
+                User.findById(users[0]._id).then((user) => {
+                    expect(user.tokens).toHaveLength(0)
+                    done()
+                }).catch(err => done(err))
+            })
     })
 })
