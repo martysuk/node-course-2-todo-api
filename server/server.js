@@ -28,7 +28,7 @@ app.post('/todos', authenticate, (req, res) => {
 
 app.get('/todos', authenticate, (req, res) => {
     Todo.find({_creator: req.user.id}).then((todos) => {
-        res.send({ todos })
+        res.send({todos})
     }, (e) => {
         res.sendStatus(400).send(e)
     })
